@@ -1,0 +1,15 @@
+.link {
+	color: blue;
+}
+
+.customLabel {
+	display: inline-block;
+	width: 100px;
+}
+
+span.cat {
+font-size:20px;
+}
+
+/* font size for jquery selects and buttons */
+.ui-widget { font-size: 12px !important; }

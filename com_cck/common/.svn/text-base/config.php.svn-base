@@ -1,0 +1,34 @@
+<?php
+// directory where all cck files are stored
+$fileDirectory = JPATH_SITE."/media/cck/";
+
+$fileDownloadRedirect = JROUTE::_("/index.php?option=com_jumi&fileid=4&Itemid=1");
+
+$frontBrowse = "/index.php?option=com_jumi&fileid=11&Itemid=55";
+$backBrowse = "/administrator/index.php?option=com_cck";
+
+$frontEdit = "/index.php?option=com_jumi&fileid=6&Itemid=55";
+$backEdit = "/administrator/index.php?option=com_cck&task=edit";
+
+$contentTypeBackBrowse = "index.php?option=com_cck&task=browseContentType";
+$contentTypeBackEdit = "index.php?option=com_cck&task=editContentType";
+
+// what content type can create front end user
+$frontContentTypeCreation = "4";
+
+$frontInvisibleFields = array("categoryId");
+
+// show this message on front end if user is not logged in and wants to browse the content
+$notLoggedInMessage = "<p>You must login to see the content.</p>";
+
+$googleMapsApiKey = "ABQIAAAA3gwhKIaPs2TKrXwMgE6EgBRqtwsG_iXzwypfI2AJf6DfHQCBCxQ615CYQQ6GhB2rrprjaIqLnkJhLg";
+
+//urls of custom pages
+global $categorySingleContentUrl;
+
+$countrySingleContentUrl = "index.php?option=com_jumi&fileid=8&Itemid=13";
+$countryListContentUrl = "index.php?option=com_jumi&fileid=7&Itemid=6";
+$eventSingleContentUrl = "index.php?option=com_jumi&fileid=3&Itemid=6";
+$categorySingleContentUrl = "index.php?option=com_jumi&fileid=9&Itemid=13";
+$categoryListContentUrl = "index.php?option=com_jumi&fileid=10&Itemid=6";
+?>
