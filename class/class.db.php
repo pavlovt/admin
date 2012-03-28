@@ -12,7 +12,7 @@ class db extends PDO {
 			//PDO::ATTR_PERSISTENT => true,
 			1002 => 'SET NAMES utf8',
 			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-			//PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ
+			//PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
 		);
 
 		try {
@@ -62,7 +62,7 @@ class db extends PDO {
 
 	public function delete($table, $where, $bind="") {
 		$sql = "DELETE FROM " . $table . " WHERE " . $where . ";";
-		$this->run($sql, $bind)->rowCount();
+		$this->run($sql, $bind)->check();
 	}
 
 	private function filter($table, $info) {
@@ -80,10 +80,11 @@ class db extends PDO {
 			$key = "column_name";
 		}	
 
-		if(false !== ($list = $this->run($sql)->getAll())) {
+		if(false !== ($list = $this->run($sql)->getAll(PDO::FETCH_OBJ))) {
 			$fields = array();
 			foreach($list as $record)
 				$fields[] = $record->$key;
+
 			return array_values(array_intersect($fields, array_keys($info)));
 		}
 		return array();
@@ -100,12 +101,13 @@ class db extends PDO {
 	}
 
 	public function insert($table, $info) {
+      $GLOBALS["lastError"] = "";
 		$fields = $this->filter($table, $info);
 		$sql = "INSERT INTO " . $table . " (" . implode($fields, ", ") . ") VALUES (:" . implode($fields, ", :") . ");";
 		$bind = array();
 		foreach($fields as $field)
 			$bind[":$field"] = $info[$field];
-		return $this->run($sql, $bind)->rowCount();
+		return $this->run($sql, $bind)->check();
 	}
 
 	public function run($sql, $bind="") {
@@ -149,6 +151,10 @@ class db extends PDO {
 		return $this;
 	}
 
+  public function query($sql, $bind="") {
+    return $this->run($sql, $bind);
+  }
+
   public function getResult() {
     if (!empty($this->error)) {
       return false;
@@ -159,13 +165,23 @@ class db extends PDO {
   
   public function rowCount() {
     if (!empty($this->error)) {
+    	//var_dump($this->error);exit('w');
       return false;
     }
     
     return $this->pdostmt->rowCount();
   }
+
+  public function check() {
+    if (!empty($this->error)) {
+      //var_dump($this->error);exit('w');
+      return false;
+    }
+    
+    return true;
+  }
 	
-	public function getAll($resultType = PDO::FETCH_OBJ) {
+	public function getAll($resultType = PDO::FETCH_ASSOC) {
 	  if (!empty($this->error)) {
 			return false;
 		}
@@ -183,7 +199,7 @@ class db extends PDO {
 	}
   
   // make first field in the query to be the key for the result
-  public function getAllGroup($resultType = PDO::FETCH_OBJ) {
+  public function getAllGroup($resultType = PDO::FETCH_ASSOC) {
     if (!empty($this->error)) {
       return false;
     }
@@ -196,6 +212,32 @@ class db extends PDO {
       }
       
       if ($resultType == PDO::FETCH_OBJ) {
+        $res = (object)$res;
+      }
+    } catch (PDOException $e) {
+      $this->error = $e->getMessage();  
+      $this->debug();
+      return false;
+    }
+  
+    return (!empty($res) ? $res : false);
+  }
+	
+	// make first field in the query to be the key for the result
+  public function getIndexedColumn($resultType = PDO::FETCH_ASSOC, $index = 1) {
+    if (!empty($this->error)) {
+      return false;
+    }
+    
+    try {
+      $res = $this->pdostmt->fetchAll(PDO::FETCH_COLUMN|PDO::FETCH_GROUP);
+			print_r($res);exit;
+      $this->pdostmt->closeCursor();
+      foreach ($res as $k => $v) {
+        $res[$k] = $res[$k][$index];
+      }
+      
+      if ($resultType == PDO::FETCH_ASSOC) {
         $res = (object)$res;
       }
     } catch (PDOException $e) {
@@ -224,17 +266,17 @@ class db extends PDO {
 		return (!empty($res) ? $res : false);
 	}
 	
-	public function getRow($resultType = PDO::FETCH_OBJ) {
+	public function getRow($resultType = PDO::FETCH_ASSOC) {
 		if (!empty($this->error)) {
       return false;
     }
     
 		try {
 			if(($row = $this->pdostmt->fetch()) && !empty($row)) {
-				$this->pdostmt->closeCursor();
+				//$this->pdostmt->closeCursor();
 				return $row;
 			} else {
-				$pdostmt->closeCursor();
+				$this->pdostmt->closeCursor();
 				return false;
 			}
 		} catch (PDOException $e) {
@@ -245,13 +287,13 @@ class db extends PDO {
 	
 	}
 	
-	public function getOne($resultType = PDO::FETCH_OBJ) {
+	public function getOne($resultType = PDO::FETCH_ASSOC) {
 	  if (!empty($this->error)) {
       return false;
     }
     
 		try {
-			if(($row = $pdostmt->fetch()) && !empty($row)) {
+			if(($row = $this->pdostmt->fetch()) && !empty($row)) {
 				$this->pdostmt->closeCursor();
 				$row = (array)$row;
 				reset($row);
@@ -305,7 +347,12 @@ class db extends PDO {
 		$bind = $this->cleanup($bind);
 		foreach($fields as $field)
 			$bind[":update_$field"] = $info[$field];
-		
-		return $this->run($sql, $bind)->rowCount();
+
+		return $this->run($sql, $bind)->check();
 	}
+
+   public function setResult($result) {
+      if (!empty($result))
+         $this->pdostmt = $result;
+   }
 }	

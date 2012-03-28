@@ -1,0 +1,506 @@
+
+body, p {
+	background-color: #ffffff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 8pt;
+}
+
+.bigger {
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 14pt;
+}
+
+.smaller {
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 7pt;
+}
+
+
+.smallerEmph {
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 7pt;
+	font-style: italic;
+}
+
+.filedTag {
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 7pt;
+	color: red;
+}
+
+textarea, table, td, tr {
+	font-size: 8pt;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+}
+
+a {
+	text-decoration: none;
+	color: #005DBC;
+}
+
+.touchCheckbox {
+	width: 25px;
+	height: 25px;
+}
+
+.touchSelect {
+	font-size: 16px;
+	height: 25px;
+}
+
+.whiteLink {
+	text-decoration: none;
+	color: #FFFFFF;
+}
+
+
+a:hover {
+	text-decoration: underline;
+	color: #FF0000;
+}
+
+a.red {
+	text-decoration: none;
+	color: #FF0000;
+}
+
+a.red:hover {
+	text-decoration: underline;
+	color: #FF0000;
+}
+
+a.blue {
+	text-decoration: none;
+	color: #0000FF;
+}
+
+a.blue:hover {
+	text-decoration: underline;
+	color: #0000FF;
+}
+
+a.black {
+	text-decoration: none;
+	color: #000000;
+}
+
+a.black:hover {
+	text-decoration: underline;
+	color: #000000;
+}
+
+.error {
+	font-weight: bold;
+	color: red;
+}
+
+.notice {
+	font-size: 10px;
+	font-weight: bold;
+	color: red;
+}
+
+.noticeLarge {
+	font-size: 12px;
+	font-weight: bold;
+	color: red;
+}
+
+.noticeGreenLarge {
+	font-size: 12px;
+	font-weight: bold;
+	color: green;
+}
+
+.noticeGreen {
+	font-size: 10px;
+	font-weight: bold;
+	color: green;
+}
+
+.noticeLargeUnknown {
+	font-size: 12px;
+	font-weight: bold;
+	color: #0000FF;
+}
+
+h1 {
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 16px;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+h2 {
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 14px;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+
+
+h3 {
+
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+
+	font-size: 12px;
+
+	font-weight: bold;
+
+	text-decoration: none;
+
+}
+
+li.browseList {
+	color: #005DBC;
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+input, select, option {
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+	color: #4C4C4C;
+	font-weight: normal;
+	text-decoration: none;
+}
+
+
+
+input.smaller, select.smaller, option.smaller {
+
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+
+	font-size: 10px;
+
+	color: #4C4C4C;
+
+	font-weight: normal;
+
+	text-decoration: none;
+
+	height: 17px;
+
+}
+
+input.special {
+	color: red;
+	font-weight: bold;
+	font-size: 14px;
+}
+
+.button,
+.confirmationButton {
+	background: #e5e5e5;
+	border-bottom: 1px solid #104A7B;
+	border-right: 1px solid #104A7B;
+	border-left: 1px solid #AFC4D5;
+	border-top:1px solid #AFC4D5;
+	color:#000000;
+	height:22px;
+	text-decoration:none;
+	cursor: pointer;
+	font-size:10px;
+}
+
+.confirmationButton {
+	background-color: red;
+	border-bottom-color: DimGray;
+	border-right-color: DimGray;
+	border-left-color: DarkGray;
+	border-top-color: DarkGray;
+	color: white;
+}
+
+.buttonOn {
+	background: #f9f9f9;
+	border-bottom: 1px solid #104A7B;
+	border-right: 1px solid #104A7B;
+	border-left: 1px solid #AFC4D5;
+	border-top:1px solid #AFC4D5;
+	color:#000000;
+	height:22px;
+	text-decoration:none;
+	cursor: pointer;
+	font-size:10px;
+}
+
+.touchButton {
+	background: #e5e5e5;
+	border-bottom: 1px solid #104A7B;
+	border-right: 1px solid #104A7B;
+	border-left: 1px solid #AFC4D5;
+	border-top:1px solid #AFC4D5;
+	color:#000000;
+	height:30px;
+	text-decoration:none;
+	cursor: pointer;
+	font-size:14px;
+}
+
+.redButton {
+	background: #ff0000;
+	border-bottom: 1px solid #104A7B;
+	border-right: 1px solid #104A7B;
+	border-left: 1px solid #AFC4D5;
+	border-top:1px solid #AFC4D5;
+	color:#ffffff;
+	height:30px;
+	text-decoration:none;
+	cursor: pointer;
+	font-size:14px;
+}
+
+table.managerTable {
+	background-color: #e5e5e5;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+	cursor: default;
+}
+
+table.filterTable {
+	background-color: #ffffff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+	cursor: default;
+}
+
+table.managerEditTable {
+	border: 1px solid #e5e5e5;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	width: 370px;
+	font-size: 12px;
+	cursor: default;
+}
+
+tr.basic {
+	height: 25px;
+}
+
+tr.filterRowTitle {
+	background-color: #ffffff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 13px;
+	font-weight: bold;
+	line-height: 50px;
+}
+
+tr.filterRow {
+	background-color: #ffffff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+
+	height: 22px;
+}
+
+tr.managerRowTitle {
+	background-color: #3e79b0;
+	color: #ffffff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 13px;
+	font-weight: bold;
+	height: 25px;
+}
+
+td.managerColTitleOrdered {
+	background-color: #3e79b0;
+	color: #ffffff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 13px;
+}
+
+tr.managerRowSimple {
+	background-color: #ffffff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+}
+
+tr.managerRowOdd {
+	background-color: #ffffff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+}
+
+tr.managerRowOdd:hover {
+	background-color: #73a6d5;
+}
+
+tr.managerRowOddNoHover {
+	background-color: #ffffff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+}
+
+tr.managerRowVoidOrder {
+	background-color: #ff9a9c;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+}
+
+tr.managerRowVoidOrder:hover {
+	background-color: #ff3f44;
+}
+
+tr.managerRowHoldOrder {
+	background-color: #ff9a9c;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+}
+
+tr.managerRowHoldOrder:hover {
+	background-color: #ff3f44;
+}
+
+tr.managerRowEven {
+	background-color: #c3d9ff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+}
+
+tr.managerRowEven:hover {
+	background-color: #73a6d5;
+}
+
+tr.managerRowEvenNoHover {
+	background-color: #c3d9ff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+}
+
+td.managerColEvenOrdered {
+	background-color: #c3d9ff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+}
+
+td.managerColOddOrdered {
+	background-color: #c3d9ff;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	font-size: 12px;
+}
+
+ul.orderIntegrityReport {
+	margin: 0;
+	padding: 0;
+	margin-left: 10;
+	padding-left: 10;
+}
+
+table.progressIndicator {
+	border-bottom: 1px solid #104A7B;
+	border-right: 1px solid #104A7B;
+	border-left: 1px solid #AFC4D5;
+	border-top: 1px solid #AFC4D5;
+
+}
+
+div.progressIndicator {
+	height: 10px;
+	width: 0%;
+	background: #e5e5e5;
+
+}
+
+.productCommentBalloon {
+	background: #dee7ec;
+	border-bottom: 1px solid #104A7B;
+	border-right: 1px solid #104A7B;
+	border-left: 1px solid #AFC4D5;
+	border-top:1px solid #AFC4D5;
+	color:#000000;
+	text-decoration:none;
+	font-size:10px;
+	height: 100px;
+	width: 250px;
+	-moz-border-radius-topleft:10px;
+	-moz-border-radius-topright:10px;
+	-moz-border-radius-bottomleft:10px;
+	-moz-border-radius-bottomright:10px;
+}
+
+.adjustProductAvailabilityBalloon {
+	background: #dee7ec;
+	border-bottom: 1px solid #104A7B;
+	border-right: 1px solid #104A7B;
+	border-left: 1px solid #AFC4D5;
+	border-top:1px solid #AFC4D5;
+	color:#000000;
+	text-decoration:none;
+	font-size:10px;
+	height: 100px;
+	width: 150px;
+	-moz-border-radius-topleft:10px;
+	-moz-border-radius-topright:10px;
+	-moz-border-radius-bottomleft:10px;
+	-moz-border-radius-bottomright:10px;
+}
+
+.ajaxUpdateLayerNote {
+	color: #FFFFFF;
+	font-size: 12px;
+	font-weight: bold;
+}
+
+.reportExtraOptionsBox {
+	margin: 10px 0px 10px 30px;
+	padding: 10px 10px 10px 10px;
+	background-color: #fbfbfb;
+}
+
+#dialogwindow { padding: 0; margin: 0; font: 13px Arial,Sans-serif; }
+.dialog .top1,.dialog .top2,.dialog .bot1,.dialog .bot2{height: 1px; margin: 0 2px; font-size: 1px; line-height:1px; }
+.dialog .top1{ background:#888; }
+.dialog .top2{ background:#888; }
+.dialog .bot2{ background:#eee; }
+.dialog .bot1{ background:#555; }
+.dialog .top2,.dialog .bot2{ margin: 0 1px; border-left: 1px solid #888; border-right: 1px solid #555; }
+.dialog .bot2{ margin: 0 2px; }
+.dialog .bot1{ margin: 0 3px; }
+.dialog .titlebar{ color: white; background: #888; min-height: 14px; margin: 0 0 5px; padding: 2px 6px 3px 6px; font-size:100%; color:#FFFFFF; }
+.dialog .titlebar{ height: 14px; }
+.dialog .body{ background: #eee; padding: 5px 6px 3px 6px; }
+.dialog .border{ margin: 0 0; border-left: 1px solid #888; border-right: 1px solid #555; }
+.dialog .buttontable td{ padding: 12px 2px 6px 2px; }
+.modalDialogButton { background: #eee; border-bottom: 1px solid #888; border-right: 1px solid #888; border-left: 1px solid #888; border-top:1px solid #888; color:#000000; height:22px; text-decoration: none; cursor: pointer; font-size:10px; }
+
+/* select multiple control CSS styles; added my mihail */
+#select_multiple_container { position:relative; }
+.select_multiple_options { width:200px; position:absolute; top:0; left:0; z-index:500; border:1px solid #222; }
+
+.chartTitle { float: left; width: 100%; margin: 15px 0 10px 0; text-align: center; font: bold 13px Verdana, Helvetica, Sans-Serif; text-transform: uppercase; color: #696969; }
+
+
+sup.reqd {
+
+	color: #FF0000;
+
+}
+
+.dataTableCellAlignCenter { text-align: center; }
+.dataTableCellAlignRight { text-align: right; }
+.reportProcessing {
+	position: fixed;
+	top: 40%;
+	left: 40%;
+	width: 350px;
+	height: 50px;
+	margin-left: -125px;
+	margin-top: -15px;
+	padding: 14px 0 2px 0;
+	border: 1px solid #ddd;
+	text-align: center;
+	color: black;
+	font-size: 13px;
+	background-color: white;
+}
+
+
+@media print {
+
+	div.noPrintDiv {
+		display: none;
+	}
+
+}
+

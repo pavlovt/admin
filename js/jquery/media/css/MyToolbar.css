@@ -1,0 +1,102 @@
+@CHARSET "ISO-8859-1";
+
+.MyToolbar {
+	padding: 3px;
+	/* border: 1px solid #d0d0d0; */ 
+	background-color: white;
+	float: left;
+}
+.MyToolbar .button {
+	float: left;
+	height: 30px;
+	width: 32px;
+	cursor: pointer;
+	margin: 2px;
+	padding: 0px;
+	border: 1px solid #f0f0f0;	
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-color: transparent;
+}
+.MyToolbar .button_hover {
+	border: 1px solid #d0d0d0;
+	background-color: #fdfdfd;
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+
+.MyToolbarPopup, .MyToolbarPopup th, .MyToolbarPopup td { 
+	font-size: small !important;
+}
+.MyToolbarPopupTable {
+	border-collapse: collapse;
+	width: 100%
+}
+.MyToolbarPopupTable th, .MyToolbarPopupTable td {
+	vertical-align: top;
+	padding: 3px 5px;
+}
+
+
+/* IE Quirks Mode Fixes */
+*html .ui-widget-content { font-size: smaller; }
+
+*html .ui-widget { font-size:.95em; }
+*html .ui-widget .ui-widget { font-size: 1.1em; }
+*html .ui-widget input, *html .ui-widget select, 
+	*html .ui-widget textarea, *html .ui-widget button {
+	font-size: 1em; }
+*html .MyToolbar .button {
+	padding: 2px;
+	margin: 3px;
+}
+*html .FilterDisplay li { text-indent: 20px; }
+
+
+
+
+.FilterDisplay {
+	background-color: #f0f0f0;
+	border: 1px #d0d0d0 solid;
+	margin-left: 3px;
+	padding: 2px;
+	padding-right: 50px;
+	height: 38px;
+	max-width: 30%;
+	color: #666;
+	overflow: hidden;
+	float: left;
+	z-index: 200;
+}
+.FilterDisplay ul {
+	margin: 0px;
+}
+.FilterDisplay h3 {
+	margin: 0px;
+	font-size: 1.1em; 
+}
+.filterHover {
+	position: absolute;
+}
+.filterHover h3 {
+	color: #33F;
+}
+
+@media print {
+	.MyToolbar {display: none; float: none}
+	.MyToolbar button, .FilterDisplay { 
+		float: none; 
+		height: auto;
+		background-color: transparent;
+		border: 0px;
+	}
+	.filterHover {
+		position: static;
+		display: none;
+	}
+	.filterHover { display: none !important; }
+}
+
+
+
+

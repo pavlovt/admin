@@ -1,0 +1,48 @@
+/* menu styles */
+#jsddm
+{	margin: 0;
+	padding: 0}
+
+	#jsddm li
+	{	float: left;
+		list-style: none;
+		font-size: 11px;
+		font-weight: bold;
+	}
+
+	#jsddm li a
+	{	display: block;
+		background: #F7F3F7;
+		padding: 2px 12px;
+		text-decoration: none;
+		border-right: 1px solid #005DBD;
+		width: 70px;
+		color: #005DBD;
+		white-space: nowrap}
+
+	#jsddm li a:hover
+	{	
+		background: #005DBD;
+		color: white;
+	
+	}
+		
+		#jsddm li ul
+		{	margin: 0;
+			padding: 0;
+			position: absolute;
+			visibility: hidden;
+			border-top: 1px solid white}
+		
+			#jsddm li ul li
+			{	float: none;
+				display: inline}
+			
+			#jsddm li ul li a
+			{	width: auto;
+				background: #74A2CF;
+				color: white;
+			}
+			
+			#jsddm li ul li a:hover
+			{	background: #5389BF}

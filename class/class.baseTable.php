@@ -4,7 +4,7 @@
 class baseTable {
   /* define class properties starts */
   public $primaryKey = "";
-  public $talbleName = ""; 
+  public $tableName = ""; 
  
   public $selectFields = "";
   public $select = "";
@@ -21,8 +21,9 @@ class baseTable {
 
   /* define class properties ends */
 
-  function __construct() {
+  function __construct($return_object = false) {
     $this->reset();
+    $this->return_object = $return_object;
 
   } // constructor
 
@@ -36,20 +37,20 @@ class baseTable {
 
   public function next() {
     if (!empty($this->result) && ($this->p = $this->result->fetch())) {
-      $this->parseRecord();
-      return($this->p);
+      $this->p = $this->parseRecord($this->p);
+      return ($this->return_object ? (object)$this->p : $this->p);
     }
 
     return false;
   } // next
 
-  public function loadList($skip = null, $limit = null, $orderBy = null, $filter = '', $filterParams = '') {
+  public function loadList($skip = null, $limit = null, $orderBy = null, $filter = '', $filterParams = array()) {
     // reset
     $this->reset();
     $db = dbWrapper::getDb('db');
 
     // update select string and format the additional FROM and where extentions
-    $additionalOrderBy = $orderBy ? " ORDER BY ".trim($orderBy)." " : " ORDER BY {$this->talbleName}.{$this->primaryKey}";
+    $additionalOrderBy = $orderBy ? " ORDER BY ".trim($orderBy)." " : " ORDER BY {$this->tableName}.{$this->primaryKey}";
 
     if ((int)$limit) {
       $additionalLimit = " LIMIT ".(int)$skip.", ".(int)$limit." ";
@@ -57,14 +58,17 @@ class baseTable {
       $additionalLimit = "";
     }
 
+    if (empty($filter))
+      $filter = '';
+
     $q = 'SELECT '.$this->selectFields." ".$this->select." ".$filter." ".$additionalOrderBy." ".$additionalLimit;
-    //echo $q; exit;
+    //echo $q."<br>"; //exit;
     
     if (!$this->result = $db->run($q, $filterParams)->getResult()) {
       return false;
     }
 
-    if (!$this->totalRecords = $db->run("SELECT COUNT({$this->talbleName}.{$this->primaryKey}) ".$this->select.$filter, $filterParams, 'one')) {
+    if (!$this->totalRecords = $db->run("SELECT COUNT({$this->tableName}.{$this->primaryKey}) ".$this->select.$filter, $filterParams)->getOne()) {
       return false;
     }
 
@@ -76,8 +80,8 @@ class baseTable {
     $db = dbWrapper::getDb('db');
     $this->reset();
 
-    $q = $this->select." AND {$this->talbleName}.{$this->primaryKey} = :id";
-
+    $q = 'SELECT '.$this->selectFields." ".$this->select." AND {$this->tableName}.{$this->primaryKey} = :id";
+		//exit($q);
     if (!$this->result = $db->run($q, array('id' => (int)$id))->getResult()) {
       return false;
     }
@@ -85,6 +89,10 @@ class baseTable {
     return $this->next();
 
   } // loadById
+
+  public function find($id) {
+    return $this->loadById($id);
+  }
 
   private function reload() {
     return $this->loadById($this->p[$this->primaryKey]);
@@ -94,21 +102,25 @@ class baseTable {
   // define data and type validation
   public function isValid($data) {
     $this->errors = array();
+    $this->lastError = '';
     
     // make shure this is not an object
     $data = (array)$data;
     
     // uses functions.validate.php
     $this->errors = validateFields($data, $this->validationRules);
+
     if(!empty($this->errors)) {
+    	//var_dump($this->errors, $data);exit;
+    	$this->lastError = implode("<br>", $this->errors);
       return false;
       
     } elseif(!$this->isValidCustom($data)) {
       return true;
       
-    } else {
-      return true;
     }
+
+    return true;
     
   }
   
@@ -119,17 +131,19 @@ class baseTable {
   }
 
   public function createNew($data) {
-    $db = dbWrapper::getDb($this->dbName);
+    $db = dbWrapper::getDb('db');
 
     if (!$this->isValid($data)) {
       return false;
     }
 
-    if (!$db->insert( $this->talbleName, $data )) {
+    if (!$db->insert( $this->tableName, $data )) {
+      $this->lastError = 'Error creating new record '.$GLOBALS['lastError'];
       return false;
     }
 
     if (!$this->loadById($db->lastInsertId())) {
+      $this->lastError = 'Unable to load newly created record';
       return false;
     }
 
@@ -139,7 +153,9 @@ class baseTable {
 
   public function isLoaded() {
     // make sure anything focused
-    if (!(int)$this->p[$this->primaryKey]) {
+    $p = (array)$this->p;
+    if (!(int)$p[$this->primaryKey]) {
+      $this->lastError = 'No record is loaded';
       return false;
     }
 
@@ -149,8 +165,9 @@ class baseTable {
   } // isLoaded
 
   public function update($data) {
-    $db = dbWrapper::getDb($this->dbName);
-
+    $db = dbWrapper::getDb('db');
+    $this->lastError = '';
+      //echo "<pre>"; print_r($data); exit;
     if (!$this->isLoaded()) {
       return false;
     }
@@ -159,7 +176,8 @@ class baseTable {
       return false;
     }
 
-    if (!$db->update( $this->talbleName, $data, "{$this->primaryKey} = ".(int)$this->p[$this->primaryKey] )) {
+    if (!$db->update( $this->tableName, $data, "{$this->primaryKey} = ".(int)$this->p[$this->primaryKey] )) {
+      $this->lastError = 'Db error: '.$GLOBALS['lastError'];
       return false;
     }
 
@@ -172,15 +190,17 @@ class baseTable {
   } // update
 
   public function delete() {
-    $db = dbWrapper::getDb($this->dbName);
+    $db = dbWrapper::getDb('db');
+    $p = (array)$this->p;
 
     if (!$this->isLoaded()) {
       return false;
     }
 
-    $q = "DELETE FROM {$this->talbleName} WHERE {$this->talbleName}.{$this->primaryKey} = ".(int)$this->p[$this->primaryKey];
+    $q = "DELETE FROM {$this->tableName} WHERE {$this->tableName}.{$this->primaryKey} = ".(int)$p[$this->primaryKey];
 
     if (!$db->run($q)) {
+      $this->lastError = 'Error deleting the record '.$GLOBALS['lastError'];
       return false;
     }
 
@@ -188,19 +208,79 @@ class baseTable {
 
   } // delete
 
-  private function parseRecord() {
+  public function parseRecord($r) {
     // p is object - make it array to be able to do the following operations
-    $this->p = (array)$this->p;
-    if (!empty($this->p) && stristr(implode(",", array_keys($this->p)),"json")) {
-      foreach ($this->p as $k => $v) {
+    $r = (array)$r;
+    if (!empty($r) && stristr(implode(",", array_keys($r)),"json")) {
+      foreach ($r as $k => $v) {
         if (stristr($k,'json')) {
-          $this->p[$k] = @json_decode($this->p[$k]);
+          $r[$k] = @json_decode($r[$k], true);
         }
       }
     }
+
+    //$r = (object)$r;
     
-    $this->p = (object)$this->p;
+    return ($this->return_object ? (object)$r : $r);
 
   } // parseRecord
 
+  public function getAll() {
+    if (empty($this->result))
+      return false;
+
+    $return = PDO::FETCH_ASSOC;
+    if($this->return_object)
+      $return = PDO::FETCH_OBJ;
+
+    $db = dbWrapper::getDb('db');
+    $db->setResult($this->result);
+
+    $all = $db->getAll($return);
+    foreach ($all as $k => $v) {
+      $all[$k] = $this->parseRecord($v);
+    }
+
+    return $all;
+
+  }
+
+  public function getIndexedColumn($column) {
+    if (empty($this->result) || empty($column))
+      return false;
+
+    $db = dbWrapper::getDb('db');
+    $db->setResult($this->result);
+
+    $all = $db->getAllGroup($resultType = PDO::FETCH_ASSOC);
+    foreach ($all as $k => $v) {
+      $all[$k] = $v[$column];
+    }
+
+    return $all;
+
+  }
+
+  public function getColumn($column) {
+    if (empty($this->result) || empty($column))
+      return false;
+
+    $db = dbWrapper::getDb('db');
+    $db->setResult($this->result);
+
+    $all = $db->getAll($resultType = PDO::FETCH_ASSOC);
+    $result = array();
+    foreach ($all as $v) {
+      $result[] = $v[$column];
+    }
+
+    return $result;
+
+  }
+
+  public function emptyResult() {
+    $this->totalRecords = 0;
+    return array();
+
+  }
 } // baseTable

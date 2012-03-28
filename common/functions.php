@@ -1,240 +1,27 @@
-<?php
+<?
 
-if (!@function_exists('isSlaveUsable')) {
-    function isSlaveUsable($db) {
-        $w = @mysql_fetch_assoc(@mysql_query("SHOW SLAVE STATUS", $db));
-        if (isset($w["Seconds_Behind_Master"])) {
-            if (
-               (strlen($w["Seconds_Behind_Master"]) == strlen((int)$w["Seconds_Behind_Master"])) &&
-               ((int)$w["Seconds_Behind_Master"] < 30)
-            ) {
-                return TRUE;
-            }
+function getData($url) {
+	$ch = @curl_init();
+	@curl_setopt($ch, CURLOPT_URL, $url);
+	//curl_setopt($ch, CURLOPT_POST,1);
+ 	//curl_setopt($ch, CURLOPT_POSTFIELDS,$postVars);
+	@curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	@curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, 1 );
+	@curl_setopt( $ch, CURLOPT_AUTOREFERER, 1 );
+	@curl_setopt( $ch, CURLOPT_MAXREDIRS, 10 );
+	@curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 20);
+	//@curl_setopt($ch, CURLOPT_VERBOSE, TRUE);
+	$rawResponse = @curl_exec($ch);
 
-        }
-
-        return FALSE;
-    }
-
-} // isSlaveUsable
-
-if (!@function_exists('sys_get_temp_dir')) {
-	function sys_get_temp_dir() {
-		if ($temp = getenv('TMP')) return $temp;
-		if ($temp = getenv('TEMP')) return $temp;
-		if ($temp = getenv('TMPDIR')) return $temp;
-		$temp = tempnam(__FILE__, '');
-		if (@file_exists($temp)) {
-			unlink($temp);
-			return dirname($temp);
-		}
-		return null;
+	if(curl_errno($ch)) {
+		@curl_close($ch);
+		return(false);
 	}
-} // sys_get_temp_dir
- 
-if (!@function_exists('unlinkArray')) {
-	function unlinkArray($fileArray) {
-		foreach ($fileArray as $fileName) {
-			@unlink($fileName);
-		}
-	}
+	
+	@curl_close($ch);
+	return($rawResponse);
+
 }
-
-if (!@function_exists('arrayToXML')) {
-	function arrayToXML($data, $encoding = "UTF-8") {
-		
-		$res = "";	
-		foreach ($data as $tag => $value) {
-			
-			if ((!is_array($value)) && (!strlen($value))) {
-				// 20090923, george: by req from bankservice, just skip empty tags, instead of leaving them here
-				//$res .= "<".$tag." />";
-			} else {
-				$res .= "<".$tag.">";
-				
-				if (is_array($value)) {
-					$res .= arrayToXML($value, $encoding);
-					
-				} else {
-					$res .= htmlspecialchars($value, ENT_COMPAT, $encoding);
-				}
-				
-				$res .= "</".$tag.">";
-			}
-		}
-		
-		return $res;
-		
-	} // arrayToXML
-}
-
-if (!function_exists("stringContainSpecialChars")) {
-	function stringContainSpecialChars($s) {
-		for ($c = 0; $c < strlen($s); $c++) {
-	        $i = ord($s[$c]);
-	        if ($i > 127) {
-	            return TRUE;
-	        }
-        }
-        return FALSE;
-	}
-	
-}
-
-if (!function_exists("stringContainLatinChars")) {
-	function stringContainLatinChars($s) {
-		if (strlen($s) != strlen(ereg_replace("[A-Za-z]", "", $s))) {
-			return TRUE;
-		}
-		return FALSE;
-	}
-	
-}
-
-function cleanUpPhoneNumber($phone, $ext, $isUSPhone = TRUE) {
-
-	$extParseFound = FALSE;
-
-	$phone = strtoupper($phone);
-	$ext = strtoupper($ext);
-
-	if (!(strpos($phone, "X") === FALSE)) {
-		$phone = str_replace("X", "~", $phone);
-		$extParseFound = TRUE;
-	}
-
-	if ($extParseFound) {
-		$pa = split("~", $phone);
-		$phone = $pa[0];
-		$ext = $pa[1];
-	}
-
-	// format phone; remove all but numbers;
-	$phone = ereg_replace("[^0-9]", "", $phone);
-
-	// for extention, leave numbers only
-	$ext = ereg_replace("[^0-9]", "", $ext);
-
-	// if not usa phone number, return whatever
-	if (!$isUSPhone) {
-		return array("phone" => $phone, "ext" => $ext);
-	}
-
-	// us phone number, if leading number 1, remove it
-	$phone = ereg_replace("^1?", "", $phone);
-
-	return array("phone" => $phone, "ext" => $ext);
-
-} // cleanUpPhoneNumber
-
-function cleanUpFaxNumber($fax, $faxExt, $isUSFax = TRUE) {
-	
-	$res = cleanUpPhoneNumber($fax, $faxExt, $isUSFax);
-	
-	return array("fax" => $res["phone"], "faxExt" => $res["ext"]);
-	
-} // cleanUpFaxNumber
-
-function cleanUpZipCode($zip, $isUSZIP = TRUE) {
-
-	// trim
-	$zip = strtoupper(trim($zip));
-
-	if (!$isUSZIP) {
-		// if this is not us zip code, just return whatever is there
-		array("zip" => $zip, "zipext" => "");
-	}
-
-	// if there is a dash or space in the zip code, split into two, after the last occurance
-	$zip = str_replace(" ", "-", $zip);
-	if (($zipext = strrchr($zip, "-")) === FALSE) {
-		$zipext = "";
-	} else {
-		$zip = substr($zip, 0, strrpos($zip, "-"));
-	}
-
-	// for each, leave chars and numbers only
-	$zip = ereg_replace("[^A-Z0-9]", "", $zip);
-	$zipext = ereg_replace("[^A-Z0-9]", "", $zipext);
-
-	// return
-	return array("zip" => $zip, "zipext" => $zipext);
-
-} // cleanUpZipCode
-
-function rds($s) {
-	// ..or remove double spaces
-	return preg_replace("/[ ]+/", " ", $s);
-
-} // rds
-
-function getPageVariable($pageId, $variableName, $pool, $defaultValue, $ignoreSessionData = FALSE) {
-
-	if (!session_id()) { session_start(); }
-
-	if (isset($pool[$variableName])) {
-		$newValue = $pool[$variableName];
-
-	} elseif ((isset($_SESSION[$pageId."_".$variableName])) && (!$ignoreSessionData)) {
-		$newValue = $_SESSION[$pageId."_".$variableName];
-
-	} else {
-		$newValue = $defaultValue;
-
-	}
-
-	if (!$ignoreSessionData) {
-		$_SESSION[$pageId."_".$variableName] = $newValue;
-
-	}
-
-	return $newValue;
-
-} // getPageVariable
-
-function setPageVariable($pageId, $variableName, $newValue) {
-
-	if (!session_id()) { session_start(); }
-	$_SESSION[$pageId."_".$variableName] = $newValue;
-	$GLOBALS[$variableName] = $newValue;
-
-	return $newValue;
-
-} // setPageVariable
-
-function veSetCookie($name, $value, $time = NULL, $path = '/', $domain = NULL) {
-
-	global $$name;
-
-	// set as cookie
-	setcookie($name, $value, $time, $path, $domain);
-
-	// register as session variable as well.
-	if (@session_is_registered($name)) {
-		@session_unregister($name);
-	}
-	@session_register($name);
-	$$name = $value;
-
-} // veSetCookie()
-
-function veGetCookie($name) {
-	// june 21 2003, gosh@awebhome.com
-
-	global $$name, $HTTP_COOKIE_VARS;
-
-	// does this cookie exist in the cookie variables?
-	if (isset($HTTP_COOKIE_VARS[$name])) {
-		// yep, return this value
-		return($HTTP_COOKIE_VARS[$name]);
-
-	} else {
-		// no. return whatever value is in the varibale with this name
-		return($$name);
-
-	}
-
-} // veGetCookie()
 
 function j($str) {
 	// ensures a safe string to be passed as javascript function param
@@ -306,11 +93,11 @@ function unmakecsv($s) {
 				$a[$i] = substr($a[$i], 1);
 				$a[$i] = substr($a[$i], 0, strlen($a[$i])-1);
 				$a[$i] = str_replace('""', '"', $a[$i]);
-			
+
 			// 20080714; mihail@picink.com; fix; allow this function to handle empty csv values
 			} else if ((substr($a[$i], 0, 1) == '"') && (substr($a[$i], 0, 2) == '""')) {
 				$a[$i] = "";
-				
+
 			} else {
 				// first char not "; append this token to the prev one with , inbetween;
 				$a[$i - 1] .= ",".$a[$i];
@@ -328,103 +115,6 @@ function unmakecsv($s) {
 	return $a;
 } // unmakecsv();
 
-/************************************************************************
-*
-* CCVal - Credit Card Validation function.
-*
-* Copyright (c) 1999 Holotech Enterprises. All rights reserved.
-* You may freely modify and use this function for your own purposes. You
-* may freely distribute it, without modification and with this notice
-* and entire header intact.
-*
-* This function accepts a credit card number and, optionally, a code for
-* a credit card name. If a Name code is specified, the number is checked
-* against card-specific criteria, then validated with the Luhn Mod 10
-* formula. Otherwise it is only checked against the formula. Valid name
-* codes are:
-*
-*    mcd - Master Card
-*    vis - Visa
-*    amx - American Express
-*    dsc - Discover
-*    dnc - Diners Club
-*    jcb - JCB
-*
-* A description of the criteria used in this function can be found at
-* http://www.beachnet.com/~hstiles/cardtype.html. If you have any
-* questions or comments, please direct them to ccval@holotech.net
-*
-*                                          Alan Little
-*                                          Holotech Enterprises
-*                                          http://www.holotech.net/
-*                                          September 1999
-*
-************************************************************************/
-
-function CCVal($Num, $Name = 'n/a') {
-
-	//  Innocent until proven guilty
-	$GoodCard = true;
-
-	//  Get rid of any non-digits
-	$Num = ereg_replace("[^[:digit:]]", "", $Num);
-
-	if (!strlen($Num)) { return false; }
-
-	//  Perform card-specific checks, if applicable
-	switch ($Name) {
-
-		case "mcd" :
-			$GoodCard = ereg("^5[1-5].{14}$", $Num);
-			break;
-
-		case "vis" :
-			$GoodCard = ereg("^4.{15}$|^4.{12}$", $Num);
-			break;
-
-		case "amx" :
-			$GoodCard = ereg("^3[47].{13}$", $Num);
-			break;
-
-		case "dsc" :
-			$GoodCard = ereg("^6011.{12}$", $Num);
-			break;
-
-		case "dnc" :
-			$GoodCard = ereg("^30[0-5].{11}$|^3[68].{12}$", $Num);
-			break;
-
-		case "jcb" :
-			$GoodCard = ereg("^3.{15}$|^2131|1800.{11}$", $Num);
-			break;
-	}
-
-	//  The Luhn formula works right to left, so reverse the number.
-	$Num = strrev($Num);
-
-	$Total = 0;
-
-	for ($x = 0; $x < strlen($Num); $x++) {
-		$digit = substr($Num, $x, 1);
-
-		//    If it's an odd digit, double it
-		if ($x / 2 != floor($x / 2)) {
-			$digit *= 2;
-
-			//    If the result is two digits, add them
-			if (strlen($digit) == 2)
-				$digit = substr($digit, 0, 1) + substr($digit, 1, 1);
-		}
-
-		//    Add the current digit, doubled and added if applicable, to the Total
-		$Total += $digit;
-	}
-
-	//  If it passed (or bypassed) the card-specific check and the Total is
-	//  evenly divisible by 10, it's cool!
-	if ($GoodCard && $Total % 10 == 0) return true; else return false;
-
-}
 
 function formatDate($date) {
 	$resultArray = array("year" => "", "month" => "", "day" => "");
@@ -466,399 +156,313 @@ function formatDate($date) {
 } // formatDate
 
 function copyUploadedFile($sourceFile, $destinationDirectory, $destinationFileName, $folderSeparator) {
-	
+
 	// get uploaded file name and format it to lower case
 	$destinationFileName = strtolower(@basename($destinationFileName));
-	
+
 	// format destination file name including full file path
 	$destinationFilePath = $destinationDirectory.$folderSeparator.$destinationFileName;
-	
+
 	// make sure destination file path is unique
 	// if not unique add integer at the begining of file name
 	$i = 1;
-	
+
 	while (@file_exists($destinationFilePath)) {
 		$destinationFilePath = $destinationDirectory.$folderSeparator.$i."-".$destinationFileName;
 		$i++;
 	}
-	
+
 	// once unique file name has been generated copy uploaded file to server
 	if (@move_uploaded_file($sourceFile, $destinationFilePath)) {
 		// return uploaded file path
 		return $destinationFilePath;
 	}
-	
+
 	// an error occurred during file upload procedure
 	return FALSE;
-	
+
 } // copyUploadedFile
 
-if (!function_exists("PostIt")) {
 
-	/************************************************************************ 
-	* 
-	* PostIt - Pretend to be a form. 
-	* 
-	* Copyright (c) 1999 Holotech Enterprises. All rights reserved. 
-	* You may freely modify and use this function for your own purposes. You 
-	* may freely distribute it, without modification and with this notice 
-	* and entire header intact. 
-	* 
-	* This function takes an associative array and a URL. The array is URL- 
-	* encoded and then POSTed to the URL. If the request succeeds, the 
-	* response, if any, is returned in a scalar array. Outputting this is the 
-	* caller's responsibility; bear in mind that it will include the HTTP 
-	* headers. If the request fails, an associative array is returned with the 
-	* elements 'errno' and 'errstr' corresponding to the error number and 
-	* error message. If you have any questions or comments, please direct 
-	* them to postit@holotech.net 
-	* 
-	*                                          Alan Little 
-	*                                          Holotech Enterprises 
-	*                                          http://www.holotech.net/ 
-	*                                          December 1999 
-	* 
-	************************************************************************/ 
-	// 20040621; gosh@awebhome.com; added support for HTTP_USER and HTTP_PASS
-	// 20070519, gosh@awebhome.com, added support for $RawDataStream, which if true, will just pass the value of $DataStream, and not convert it into variable=value pairs
-	// 20070607; mihail@awebhome.com; added timeout support
-	// 20080924; mihail@picink.com; added suport to send requests over https
-	function PostIt($DataStream, $URL, $HTTP_USER = NULL, $HTTP_PASS = NULL, $HTTP_VERSION = "1.1", $RawDataStream = FALSE, $timeout = 0) {
-		// determine port where request must be sent
-		if (stristr($URL, "http://") !== FALSE) {
-			// https communication
-			$communicationPort = 80;
-		} else if (stristr($URL, "https://") !== FALSE) {
-			// https communication
-			$communicationPort = 443;
+if (!@function_exists("sendEmail")) {
+	// Send email
+	// sendFrom and To are email lists - q@q.com, t@t.com ...
+	// message is html text
+	function sendMail ($subject, $message = '') {
+		global $sendFrom, $smtpInfo, $sendTo;
+		//var_dump($sendFrom, $smtpInfo, $subject, $message); exit;
+		echo $subject."\n";
+		exit;
+		
+		//mail($sendTo, $subject, $message);
+		//return true;
+	
+		require_once(JPATH_ADMINISTRATOR."/components/com_cck/class/mail/Mail.php");
+		require_once(JPATH_ADMINISTRATOR."/components/com_cck/class/mail/Mail/mail.php");
+		require_once(JPATH_ADMINISTRATOR."/components/com_cck/class/mail/Mail_Mime/mime.php");
+		
+		$header["MIME-Version"] = "1.0";
+		$header['Content-Type'] = 'text/html; charset="utf-8"';
+		$header["Content-Transfer-Encoding"] = "quoted-printable";
+		$header["From"] = $sendFrom;
+		$header["Subject"] = $subject;
+		
+		if (!empty($message)) {
+			$mime = new Mail_mime();
+			$mime->setHTMLBody($htmlMsg);
+			$body = $mime->get(array("html_charset" => "utf-8"));
 		} else {
-			// by default use port 80
-			$communicationPort = 80;
+			$body = '';
+		}
+		
+		$smtp = Mail::factory('smtp', $smtpInfo);
+		
+		$mail = $smtp->send($sendTo, $header, $body);
+		
+		if (PEAR::isError($mail)) {
+		   return false;
+		}
+		
+		return true;
+	}
+}
+
+if (!@function_exists("db")) {
+	function db($query, $db_name = "db") {
+		$db = dbWrapper::getDb($db_name);
+		if ($db->run($query)->rowCount() === false) {
+			sendMail($GLOBALS["lastError"]);
+			return false;
 		}
 
-		//  Strip http:// from the URL if present 
-		$URL = ereg_replace("^http://", "", $URL); 
-		$URL = ereg_replace("^https://", "", $URL); 
+		return $db;
+	}
 
-		//  Separate into Host and URI 
-		$Host = substr($URL, 0, strpos($URL, "/")); 
-		$URI = strstr($URL, "/"); 
-		
-		// format SSL host (allow to send requests over https)
-		if ($communicationPort == 443) {
-			$sslHost = "ssl://".$Host;
-		} else {
-			$sslHost = $Host;
+}
+
+if (!@function_exists("dbr")) {
+	function dbr($query, $db_name = "dbr") {
+		$db = dbWrapper::getDb($db_name);
+		if ($db->run($query)->rowCount() === false) {
+			sendMail($GLOBALS["lastError"]);
+			return false;
 		}
 
-		//  Form up the request body 
-		
-		// 20070519, gosh, convert to var=value ?
-		if ($RawDataStream === TRUE) {
-			// nope, keep as is, jsut make sure $DataStream is not an array
-			if (is_array($DataStream)) { $DataStream = ""; }
-			$ReqBody = $DataStream;
+		return $db;
+	}
+
+}
+
+if (!@function_exists("dbErrorHandler")) {
+	// db error function - see common/db.php
+	function dbErrorHandler($error='') {
+		$GLOBALS["lastError"] = $error;
+	}
+}
+
+if (!@function_exists("logg")) {
+	function logg($param) {
+		?><script>console.log('<?=json_encode($param)?>');</script><?
+	}
+
+}
+
+if (!@function_exists("datediff")) {
+	function datediff($date_from, $date_to) {
+		$date_from = strtotime($date_from);
+		$date_to = strtotime($date_to);
+		if ($date_from>0 || $date_to>0) {
+			$interval  = @round(abs($date_to-$date_from)/60/60/24);
+			return $interval + 1;
+
+		} else if ($date_from>0 || $date_to>0) {
+			return 1;
+
 		} else {
-			$ReqBody = ""; 
-			while (list($key, $val) = each($DataStream)) { 
-				if ($ReqBody) $ReqBody.= "&"; 
-				$ReqBody.= $key."=".urlencode($val); 
+			return 0;
+
+		}
+	}
+
+}
+
+if (!@function_exists("date_list")) {
+	// get all dates in specified date interval as a list
+	// i.e. date_list("1.1.2012", "7.1.2012")
+	function date_list($dateFrom, $dateTo) {
+		
+		$startDateTimeStamp = strtotime($dateFrom);
+		$endDateTimeStamp = strtotime($dateTo);
+
+		// convert date in timestamp and then format it to be sure that mysql will understand it
+		$startDate = date("Y-m-d", strtotime($dateFrom));
+		$endDate = date("Y-m-d", strtotime($dateTo));
+
+		if (!$startDateTimeStamp) $startDate = START_DATE;
+		if (!$endDateTimeStamp) $endDate = END_DATE;
+		$startDateTimeStamp = strtotime($startDate);
+		$endDateTimeStamp = strtotime($endDate);
+
+		// difference between dates in days
+		$daysDiff = datediff($startDate, $endDate);
+
+		if ($daysDiff == 0) return "'".$startDate."'";
+
+		$dates = array();
+		for ($i=0; $i < $daysDiff ; $i++) { 
+			$dates[] = date("Y-m-d", strtotime("+{$i} days", $startDateTimeStamp));
+		}
+
+		return "'".implode("','", $dates)."'";
+	}
+
+}
+
+function html_table_header($params) {
+	$result = "";
+	$params = (array)$params;
+
+	$result = __::map($params, function($v) { 
+		return "<th>{$v}</th>";
+	});
+
+	$result = __::reduce($result, function($memo, $v) { return $memo . $v; }, '');
+
+	return $result;
+}
+
+/**
+ * Generates table body or footer structure
+ * $params = array(0 => array("name" => "qqq", "price" => 3.20), 1 => ...); 
+ * $def = array("name" => array("type" => "string", "class" => array("center"), "price" => array("type" => "num", "class" => "right"))
+ * html_element may be td or th (th is used for the table footer)
+ */
+function html_table_content($params, array $def, $html_element = 'td') {
+
+	$result = "";
+	$params = (array)$params;
+	foreach ($params as $i => $vs) {
+		$vs = (array)$vs;
+		// $vs = array("name" => "qqq", "price" => 3.20);
+		$res = "";
+		foreach ($def as $k => $v) {
+			if (empty($vs[$k]) && $v["type"] != 'link') {
+				$res .= "<{$html_element}>&nbsp;</{$html_element}>";
+				continue;
 			}
-		}
-		
-		$ContentLength = strlen($ReqBody); 
 
-		//  Add Authorization?
-		if (($HTTP_USER) && ($HTTP_PASS)) {
-			$reqHeaderAuthStr = "Authorization: Basic ".base64_encode($HTTP_USER.":".$HTTP_PASS)."\n";
+			switch ($v["type"]) {
+				case 'int':
+					$vs[$k] = (int)$vs[$k];
+					$add_class = ($html_element == 'th' ? 'right_pad' : '');
+					$res .= "<{$html_element} class='{$v["class"]}  {$add_class}'>".@number_format($vs[$k], 0, '.', ' ')."</{$html_element}>";
+					break;
 
-		} else {
-			$reqHeaderAuthStr = "";
+				case 'float':
+					$vs[$k] = (float)$vs[$k];
+					$add_class = ($html_element == 'th' ? 'right_pad' : '');
+					$res .= "<{$html_element} class='{$v["class"]} {$add_class}'>".@number_format($vs[$k], 1, '.', ' ')."</{$html_element}>";
+					break;
 
-		}
+				case 'link':
+					$res .= "<{$html_element} class='center width20'><a class='button size9 {$v["class"]}' href='{$v['link']}{$vs[$v['id']]}'>{$k}</a></{$html_element}>";
+					break;
 
-		//  Generate the request header 
-		$ReqHeader = 
-			"POST $URI HTTP/".$HTTP_VERSION."\n". 
-			"Host: $Host\n". 
-			"User-Agent: PostIt\n". 
-			"Content-Type: application/x-www-form-urlencoded\n".
-			$reqHeaderAuthStr.
-			"Content-Length: $ContentLength\n\n". 
-			"$ReqBody\n\n"; 
-			
-		//  Open the connection to the host 
-		// if timeout param is available use it when try to open socket to remote host
-		if ((int)$timeout) {
-			$socket = @fsockopen($sslHost, $communicationPort, $errno, $errstr, $timeout);
-		} else {
-			$socket = @fsockopen($sslHost, $communicationPort, $errno, $errstr);
-		}
-		
-		if (!$socket) { 
-			$Result["errno"] = $errno; 
-			$Result["errstr"] = $errstr;
-			return $Result; 
-		} 
-		$idx = 0; 
-		
-		@fputs($socket, $ReqHeader); 
-			
-		// 20070607; mihail@awebhome.com; set stream timeout if needed
-		$Result['timed_out'] = FALSE;
-		if ((int)$timeout) { stream_set_timeout($socket, $timeout);  }
-		
-		while (!@feof($socket)) { 
-			$Result[$idx++] = @fgets($socket, 128);
-			
-			// check if connection timed out
-			if ((int)$timeout) {
-				$streamInfo = @stream_get_meta_data($socket);
-				if ($streamInfo['timed_out']) { $Result['timed_out'] = TRUE; break; }
+				default:
+					$res .= "<{$html_element} class='{$v["class"]}'>{$vs[$k]}</{$html_element}>";
+					break;
 			}
-		}
-		
-		return $Result; 
+		};
 
-	} // PostIt
+		$class = ($i>0 ? "tr-noborder" : "tr-top-border");
+		$result .= "<tr class='{$class}'>{$res}</tr>";
 
-} 
+	};
 
-// 20061205 -- mihail@awebhome.com -- functions for compress/uncompress files 
-function zipFile($zipCmd, $sendOutput, $tempDirectory, $fileName, $tempFileName) {
-	// format file names
-	$tempNonZipFileName = $tempDirectory.$fileName;
-	$tempZipFileName = $tempDirectory.$fileName.".zip";
-	$downloadFileName = @basename($tempZipFileName);
-	
-	// compress file
-	@copy($tempFileName, $tempNonZipFileName); 	
-	@exec($zipCmd." ".$tempZipFileName." ".$tempNonZipFileName); 
+	return $result;
+}
 
-	// send output to browser if needed
-	if ($sendOutput) {
-		// send compressed file for download
-		header("Content-Type: application/octet-stream");
-		header("Content-Disposition: attachment; filename=\"$downloadFileName\"");
-	
-		$fp = @fopen($tempZipFileName, "r");
-		@fpassthru($fp);
-		@fclose($fp);
-		
-		// remove temp files
-		@unlink($tempZipFileName);
-		@unlink($tempNonZipFileName);
-		
-		exit();
-		
-	} else {
-		// remove temp file
-		@unlink($tempNonZipFileName);
-		
-		// return compressed file name
-		return $tempZipFileName;
+/**
+ * Get CoffeeScript!
+ */
+function get_coffee($scriptPath) {
+	$coffee = file_get_contents($scriptPath);
+
+	if (empty($coffee)) return false;
+
+	try {
+	  $js = CoffeeScript\compile($coffee);
+
+	  echo "<script>{$js}</script>";
+
+	} catch (Exception $e) {
+		exit('An error occured while loading '.$scriptPath);
 	}
-	
-} // zipFile
-
-function unzipFile($unzipCmd, $sendOutput, $tempDirectory, $fileName, $tempFileName) {
-	// check if zip archive
-	if (strtolower(substr($fileName, -4)) != ".zip") { return FALSE; }
-	
-	// format file names
-	$tempNonZipFileName = $tempDirectory.substr($fileName, 0, -4);
-	$tempZipFileName = $tempDirectory.$fileName;
-	$downloadFileName = @basename($tempNonZipFileName);
-	
-	// uncompress file
-	@copy($tempFileName, $tempZipFileName);
-	@exec($unzipCmd." ".$tempZipFileName);
-	
-	// send output to browser if needed
-	if ($sendOutput) {
-		// send uncompressed file for download
-		header("Content-Type: application/octet-stream");
-		header("Content-Disposition: attachment; filename=\"$downloadFileName\"");
-	
-		$fp = @fopen($tempNonZipFileName, "r");
-		@fpassthru($fp);
-		@fclose($fp);
-		
-		// remove temp files
-		@unlink($tempZipFileName);
-		@unlink($tempNonZipFileName);
-		
-		exit();
-		
-	} else {
-		// remove temp file
-		@unlink($tempZipFileName);
-		
-		// return compressed file name
-		return $tempNonZipFileName;
-	}
-	
-} // unzipFile
-
-function getCardType($Num) {
-	// 20090509 -- george: changed the alorythm to tell card type. simplify, not require as many conditions for MC, AMEX and DISC;
-	// old IF-s commented and kept for reference
-	
-	//  Get rid of any non-digits
-	$Num = ereg_replace("[^[:digit:]]", "", $Num);
-
-	if (!strlen($Num)) { return "UNKNOWN"; }
-	
-	// try to determine card type based on account number
-	//if (ereg("^5[1-5].{14}$", $Num)) {
-	if (ereg("^5.{15}$", $Num)) {
-		return "MASTERCARD";
-	} else if (ereg("^4.{15}$|^4.{12}$", $Num)) {
-		return "VISA";
-	//} else if (ereg("^3[47].{13}$", $Num)) {
-	} else if (ereg("^3.{14}$", $Num)) {
-		return "AMEX";
-	//} else if (ereg("^6011.{12}$", $Num)) {
-	} else if (ereg("^6.{15}$", $Num)) {
-		return "DISCOVER";
-	} else {
-		return "UNKNOWN";
-	}
-	
-} // getCardType
-
-function xlsBOF() {
-	$s = pack("ssssss", 0x809, 0x8, 0x0, 0x10, 0x0, 0x0);  
- 
-	if (isset($GLOBALS["xlsFunctionsReturnValue"])) { return $s; }
-
-	echo $s;
-    return;
 }
 
-function xlsEOF() {
-    $s = pack("ss", 0x0A, 0x00);
-	
-	if (isset($GLOBALS["xlsFunctionsReturnValue"])) { return $s; }
-	
-	echo $s;
-    return;
-}
-
-function xlsWriteNumber($Row, $Col, $Value) {
-	$s = pack("sssss", 0x203, 14, $Row, $Col, 0x0);
-	$s .= pack("d", $Value);
-	
-	if (isset($GLOBALS["xlsFunctionsReturnValue"])) { return $s; }
-	
-	echo $s;
-    return;
-}
-
-function xlsWriteLabel($Row, $Col, $Value ) {
-    $L = strlen($Value);
-	
-	$s = pack("ssssss", 0x204, 8 + $L, $Row, $Col, 0x0, $L);
-	$s .= $Value;
-	
-	if (isset($GLOBALS["xlsFunctionsReturnValue"])) { return $s; }
-	
-	echo $s;
-	return;
-} 
-
-function writeXlsRow($row, $data, $customDecimalDelimiter = ".", $srcEncoding = "UTF-8", $xlsEncoding = "Windows-1251") {
-	$xlsCol = 0;
-	$s = "";
-	
-	foreach ($data as $t) {
-		
-		// convert decimal delimiter to . in case it is , or something else
-		$tNumber = trim(str_replace($customDecimalDelimiter, ".", $t));
-		$tNumberArray = explode(".", $tNumber); // count MUST be <= 2. otherwise this may be a date like 11.10.2009, etc, which will mess it up
-		
-		// check if only numbers?
-		if ((preg_replace("/[^0-9\.\-]/", "", $tNumber) == $tNumber) && (strlen($tNumber)) && (count($tNumberArray) <= 2)) {
-			// number	
-			$s .= xlsWriteNumber($row, $xlsCol, mb_convert_encoding($tNumber, $xlsEncoding, $srcEncoding));
-		} else {
-			$s .= xlsWriteLabel($row, $xlsCol, mb_convert_encoding($t, $xlsEncoding, $srcEncoding));
-		}
-    	$xlsCol++;
-   	}
-	
-	if (!isset($GLOBALS["xlsFunctionsReturnValue"])) { $s = ""; }
-	
-	return $s;
-}
-
-if (!@function_exists('xmlEntities')) {
-	function xmlEntities($str) {
-	    $xml = array('&#34;','&#38;','&#38;','&#60;','&#62;','&#160;','&#161;','&#162;','&#163;','&#164;','&#165;','&#166;','&#167;','&#168;','&#169;','&#170;','&#171;','&#172;','&#173;','&#174;','&#175;','&#176;','&#177;','&#178;','&#179;','&#180;','&#181;','&#182;','&#183;','&#184;','&#185;','&#186;','&#187;','&#188;','&#189;','&#190;','&#191;','&#192;','&#193;','&#194;','&#195;','&#196;','&#197;','&#198;','&#199;','&#200;','&#201;','&#202;','&#203;','&#204;','&#205;','&#206;','&#207;','&#208;','&#209;','&#210;','&#211;','&#212;','&#213;','&#214;','&#215;','&#216;','&#217;','&#218;','&#219;','&#220;','&#221;','&#222;','&#223;','&#224;','&#225;','&#226;','&#227;','&#228;','&#229;','&#230;','&#231;','&#232;','&#233;','&#234;','&#235;','&#236;','&#237;','&#238;','&#239;','&#240;','&#241;','&#242;','&#243;','&#244;','&#245;','&#246;','&#247;','&#248;','&#249;','&#250;','&#251;','&#252;','&#253;','&#254;','&#255;');
-	    $html = array('&quot;','&amp;','&amp;','&lt;','&gt;','&nbsp;','&iexcl;','&cent;','&pound;','&curren;','&yen;','&brvbar;','&sect;','&uml;','&copy;','&ordf;','&laquo;','&not;','&shy;','&reg;','&macr;','&deg;','&plusmn;','&sup2;','&sup3;','&acute;','&micro;','&para;','&middot;','&cedil;','&sup1;','&ordm;','&raquo;','&frac14;','&frac12;','&frac34;','&iquest;','&Agrave;','&Aacute;','&Acirc;','&Atilde;','&Auml;','&Aring;','&AElig;','&Ccedil;','&Egrave;','&Eacute;','&Ecirc;','&Euml;','&Igrave;','&Iacute;','&Icirc;','&Iuml;','&ETH;','&Ntilde;','&Ograve;','&Oacute;','&Ocirc;','&Otilde;','&Ouml;','&times;','&Oslash;','&Ugrave;','&Uacute;','&Ucirc;','&Uuml;','&Yacute;','&THORN;','&szlig;','&agrave;','&aacute;','&acirc;','&atilde;','&auml;','&aring;','&aelig;','&ccedil;','&egrave;','&eacute;','&ecirc;','&euml;','&igrave;','&iacute;','&icirc;','&iuml;','&eth;','&ntilde;','&ograve;','&oacute;','&ocirc;','&otilde;','&ouml;','&divide;','&oslash;','&ugrave;','&uacute;','&ucirc;','&uuml;','&yacute;','&thorn;','&yuml;');
-	    $str = str_replace($html,$xml,htmlentities($str));
-	    $str = str_ireplace($html,$xml,$str);
-	    return $str;
-	} 
-} // xmlEntities
-
-// file download
-//$file = 'ASDFGgg.pdf'; 
-//_Download("files_dir/".$file, $file); 
-function fileDownload($f_location,$f_name){ 
-    header("Content-type: application/pdf"); // add here more headers for diff. extensions
-    header("Content-Disposition: attachment; filename=\"".$f_name."\"");
-    header('Content-Length: ' . filesize($f_location));
-    header("Cache-control: private"); //use this to open files directly
-    ob_clean();
-    flush();
-    readfile($f_location);
-
-}
-
-// Send email
-// sendFrom and To are email lists - q@q.com, t@t.com ...
-// message is html text
-function sendMail ($sendTo, $subject, $message = '') {
-	global $sendFrom;
-	//echo $subject."\n";
-	//return false;
-	
-	//mail($sendTo, $subject, $message);
-	//return true;
-
-	require_once(JPATH_ADMINISTRATOR."/components/com_cck/class/mail/Mail.php");
-	require_once(JPATH_ADMINISTRATOR."/components/com_cck/class/mail/Mail/mail.php");
-	require_once(JPATH_ADMINISTRATOR."/components/com_cck/class/mail/Mail_Mime/mime.php");
-	
-	global $smtpInfo;
-	
-	$header["MIME-Version"] = "1.0";
-	$header['Content-Type'] = 'text/html; charset="utf-8"';
-	$header["Content-Transfer-Encoding"] = "quoted-printable";
-	$header["From"] = $sendFrom;
-	$header["Subject"] = $subject;
-	
+/**
+ * Set session message
+ */
+function notify($message, $is_error = false) {
+	# save message in session
 	if (!empty($message)) {
-		$mime = new Mail_mime();
-		$mime->setHTMLBody($htmlMsg);
-		$body = $mime->get(array("html_charset" => "utf-8"));
-	} else {
-		$body = '';
+		if ($is_error) 
+			$_SESSION["userSession"]["pageErrors"][] = $message;
+		else
+			$_SESSION["userSession"]["pageMessages"][] = $message;
 	}
-	
-	$smtp = Mail::factory('smtp', $smtpInfo);
-	
-	$mail = $smtp->send($sendTo, $header, $body);
-	
-	if (PEAR::isError($mail)) {
-	   return false;
-	}
-	
-	return true;
+
 }
 
-// db error function - see common/db.php
-function dbErrorHandler($error='') {
-	$GLOBALS["lastError"] = $error;
+/**
+ * Redirect and show message
+ */
+function redirect($path, $message, $is_error = false) {
+	# save message in session
+	notify($message, $is_error);
+
+	# redirect
+	if (!empty($path)) {
+		# save the session before redirect
+		session_write_close();
+		header("Location: {$path}");
+	}
+
+}
+
+/**
+ * Return the date if valid, else return the current date
+ */
+function dates($date){
+	if (strtotime($date)) {
+		return date("d.m.Y", strtotime($date));
+	} else {
+		return date("d.m.Y");
+	}
+}
+
+/**
+ * Protect from cross site scripting and other atacks
+ */
+function clear_xss($text){
+	require_once basePath.'class/class.inputfilter.php';
+  $inputFilter = new InputFilter();
+  $text = $inputFilter->process($text);
+  return $text;
+}
+
+
+/**
+ * Generate pdf $file from the given $url
+ */
+function get_pdf($url, $file){
+	#if (!file_exists(pdfPath.$url))
+	#	die('Избраният файл не съществува');
+	//exit("wkhtml ".pdfUrl."{$url} ".pdfFilePath.$file);
+	exec("wkhtml ".pdfUrl."{$url} ".pdfFilePath.$file."  2>&1");
+
+	# We'll be outputting a PDF
+	header('Content-type: application/pdf');
+	header('Content-Disposition: attachment; filename="'.$file.'"');
+	readfile(pdfFilePath.$file);
 }
